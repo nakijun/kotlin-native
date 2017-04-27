@@ -34,6 +34,12 @@ interface KonanLibrary {
     val bitcodePaths: List<String>
 }
 
+internal class LinkData(
+    val module: String,
+    val fragments: List<String>,
+    val fragmentNames: List<String> )
+
+
 class KtBcLibrary(val file: File, val configuration: CompilerConfiguration): KonanLibrary {
     constructor(path: String, configuration: CompilerConfiguration) : this(File(path), configuration) 
     init {

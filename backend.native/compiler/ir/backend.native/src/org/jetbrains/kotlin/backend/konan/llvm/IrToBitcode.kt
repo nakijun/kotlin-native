@@ -78,7 +78,7 @@ internal fun emitLLVM(context: Context) {
         }
 
         phaser.phase(KonanPhase.METADATOR) {
-            irModule.acceptVoid(MetadatorVisitor(context))
+            MetadataGenerator(context).addLinkData()
         }
 
         phaser.phase(KonanPhase.BITCODE_LINKER) {
@@ -134,19 +134,6 @@ internal class RTTIGeneratorVisitor(context: Context) : IrElementVisitorVoid {
 
 //-------------------------------------------------------------------------//
 
-internal class MetadatorVisitor(val context: Context) : IrElementVisitorVoid {
-
-    val metadator = MetadataGenerator(context)
-
-    override fun visitElement(element: IrElement) {
-        element.acceptChildrenVoid(this)
-    }
-
-    override fun visitModuleFragment(module: IrModuleFragment) {
-        module.acceptChildrenVoid(this)
-        metadator.endModule(module)
-    }
-}
 
 /**
  * Defines how to generate context-dependent operations.

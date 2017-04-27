@@ -161,13 +161,14 @@ internal class MetadataGenerator(override val context: Context): ContextUtils {
         return LLVMMDString(str, str.length)!!
     }
 
-    private fun addLinkData(module: IrModuleFragment) {
+    fun addLinkData() {
+        val irModule = context.irModule!!
         val linkData = context.serializedLinkData
         if (linkData == null) return
 
         val abiVersion = context.config.configuration.get(KonanConfigKeys.ABI_VERSION)
         val abiNode = metadataString("$abiVersion")
-        val moduleName = metadataString(module.descriptor.name.asString())
+        val moduleName = metadataString(irModule.descriptor.name.asString())
         val module = linkData.module
         val fragments = linkData.fragments
         val fragmentNames = linkData.fragmentNames
@@ -182,10 +183,6 @@ internal class MetadataGenerator(override val context: Context): ContextUtils {
             val kpackageArg = metadataNode(listOf(dataNode))
             emitModuleMetadata("kpackage:$name", kpackageArg)
         }
-    }
-
-    internal fun endModule(module: IrModuleFragment) {
-        addLinkData(module)
     }
 }
 
