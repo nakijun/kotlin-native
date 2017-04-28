@@ -39,9 +39,9 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
             return fromCommandLine + distribution.stdlib
         }
 
-    internal val libraries: List<KonanLibrary> by lazy {
-        // Here we have chosen a particular .kt.bc KonanLibrary implementation
-        libraryNames.map{it -> KtBcLibrary(it, configuration)}
+    internal val libraries: List<KonanLibraryReader> by lazy {
+        // Here we have chosen a particular .kt.bc KonanLibraryReader implementation
+        libraryNames.map{it -> KtBcLibraryReader(it, configuration)}
     }
 
     private val loadedDescriptors = loadLibMetadata()

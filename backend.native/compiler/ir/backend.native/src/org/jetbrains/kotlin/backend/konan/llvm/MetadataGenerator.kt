@@ -26,7 +26,14 @@ import java.io.File
 
 class NamedModuleData(val name:String, val base64: String)
 
-fun MetadataReader.loadSerializedModule(currentAbiVersion: Int): NamedModuleData  {
+interface MetadataReader {
+    fun loadSerializedModule(currentAbiVersion: Int): NamedModuleData
+    fun loadSerializedPackageFragment(fqName: String): String
+}
+
+class KtBcMetadataReader(file: File) : Closeable, MetadataReader {
+
+override fun loadSerializedModule(currentAbiVersion: Int): NamedModuleData  {
     val (nodeCount, kmetadataNodeArg) = namedMetadataNode("kmetadata")
 
     if (nodeCount != 1) {
@@ -48,7 +55,7 @@ fun MetadataReader.loadSerializedModule(currentAbiVersion: Int): NamedModuleData
     return NamedModuleData(moduleName, tableOfContentsAsString)
 }
 
-fun MetadataReader.loadSerializedPackageFragment(fqName: String): String {
+override fun loadSerializedPackageFragment(fqName: String): String {
     val (nodeCount, kpackageNodeArg) = namedMetadataNode("kpackage:$fqName")
 
     if (nodeCount != 1) {
@@ -60,8 +67,6 @@ fun MetadataReader.loadSerializedPackageFragment(fqName: String): String {
     val base64 =  string(dataNode)
     return base64
 }
-
-class MetadataReader(file: File) : Closeable {
 
     lateinit var llvmModule: LLVMModuleRef
     lateinit var llvmContext: LLVMContextRef
