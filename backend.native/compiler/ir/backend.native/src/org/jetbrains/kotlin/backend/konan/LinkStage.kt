@@ -265,8 +265,8 @@ internal class LinkStage(val context: Context) {
     fun linkStage() {
         context.log{"# Compiler root: ${distribution.konanHome}"}
 
-        val bitcodeFiles = listOf<BitcodeFile>(emitted, distribution.start, 
-            distribution.runtime, distribution.launcher) + 
+        val bitcodeFiles = listOf<BitcodeFile>(emitted//, distribution.start, 
+            /*distribution.runtime, distribution.launcher*/) + 
             libraries.map{it -> it.bitcodePaths}.flatten()
 
         var objectFiles: List<String> = listOf()

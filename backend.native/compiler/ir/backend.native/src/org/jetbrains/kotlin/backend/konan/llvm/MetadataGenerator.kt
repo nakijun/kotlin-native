@@ -20,15 +20,46 @@ import kotlinx.cinterop.*
 import llvm.*
 import org.jetbrains.kotlin.backend.konan.Context
 import org.jetbrains.kotlin.backend.konan.KonanConfigKeys
+import org.jetbrains.kotlin.backend.konan.LinkData
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import java.io.Closeable
 import java.io.File
+import kotlin.io.readText
+import java.util.Properties
 
 class NamedModuleData(val name:String, val base64: String)
 
 interface MetadataReader {
     fun loadSerializedModule(currentAbiVersion: Int): NamedModuleData
     fun loadSerializedPackageFragment(fqName: String): String
+}
+
+class SplitMetadataReader(file: File) : MetadataReader {
+
+    val linkDataDir = File(file, "linkdata")
+
+    override fun loadSerializedModule(currentAbiVersion: Int): NamedModuleData {
+        val header = Properties()
+        val file = File(linkDataDir, "module")
+        file.bufferedReader().use { reader ->
+            header.load(reader)
+        }
+        val headerAbiVersion = header.getProperty("abi_version")!!
+        val moduleName = header.getProperty("module_name")!!
+        val moduleData = header.getProperty("module_data")!!
+
+        if ("$currentAbiVersion" != headerAbiVersion) 
+            error("ABI version mismatch. Compiler expects: $currentAbiVersion, the library is $headerAbiVersion")
+
+        return NamedModuleData(moduleName, moduleData)
+    }
+
+    override fun loadSerializedPackageFragment(fqName: String): String {
+        val realName = if (fqName == "") "<root>" else fqName
+
+        return File(linkDataDir, realName).readText()
+
+    }
 }
 
 class KtBcMetadataReader(file: File) : Closeable, MetadataReader {
@@ -166,27 +197,46 @@ internal class MetadataGenerator(override val context: Context): ContextUtils {
         return LLVMMDString(str, str.length)!!
     }
 
-    fun addLinkData() {
-        val irModule = context.irModule!!
-        val linkData = context.serializedLinkData
+    fun addLinkData(linkData: LinkData) {
         if (linkData == null) return
 
-        val abiVersion = context.config.configuration.get(KonanConfigKeys.ABI_VERSION)
-        val abiNode = metadataString("$abiVersion")
-        val moduleName = metadataString(irModule.descriptor.name.asString())
+        val abiNode = metadataString("${linkData.abiVersion}")
+        val moduleNameNode = metadataString(linkData.moduleName)
         val module = linkData.module
         val fragments = linkData.fragments
         val fragmentNames = linkData.fragmentNames
         val dataNode = metadataString(module)
 
-        val kmetadataArg  = metadataNode(listOf(abiNode, moduleName, dataNode))
+        val kmetadataArg  = metadataNode(listOf(abiNode, moduleNameNode, dataNode))
         emitModuleMetadata("kmetadata", kmetadataArg)
 
         fragments.forEachIndexed { index, it ->
-            val name = fragmentNames.get(index)
+            val name = fragmentNames[index]
             val dataNode = metadataString(it)
             val kpackageArg = metadataNode(listOf(dataNode))
             emitModuleMetadata("kpackage:$name", kpackageArg)
+        }
+    }
+}
+
+internal class SplitMetadataGenerator(
+    override val context: Context, val file: File): ContextUtils {
+
+    fun addLinkData(linkData: LinkData) {
+
+        val header = Properties()
+        header.putAll(hashMapOf(
+            "abi_version" to "${linkData.abiVersion}",
+            "module_name" to "${linkData.moduleName}",
+            "module_data" to "${linkData.module}"
+        ))
+        header.store(File(file, "module").outputStream(), null)
+
+        linkData.fragments.forEachIndexed { index, it ->
+            val name = linkData.fragmentNames[index] 
+            val realName = if (name == "") "<root>" else name
+            println("realName = $realName")
+            File(file, realName).writeText(it)
         }
     }
 }

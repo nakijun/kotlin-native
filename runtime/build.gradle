@@ -38,6 +38,7 @@ targetList.each { targetName ->
         srcRoot file('src/launcher')
         target targetName
         compilerArgs targetArgs[targetName]
+        compilerArgs '-g'
         compilerArgs '-I' + project.file('../common/src/hash/headers')
         compilerArgs '-I' + project.file('src/main/cpp')
     }

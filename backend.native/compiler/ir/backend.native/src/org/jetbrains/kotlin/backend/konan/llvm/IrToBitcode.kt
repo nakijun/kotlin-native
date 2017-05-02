@@ -26,6 +26,9 @@ import org.jetbrains.kotlin.backend.konan.KonanPhase
 import org.jetbrains.kotlin.backend.konan.PhaseManager
 import org.jetbrains.kotlin.backend.konan.descriptors.*
 import org.jetbrains.kotlin.backend.konan.ir.*
+import org.jetbrains.kotlin.backend.konan.KonanLibraryWriter
+import org.jetbrains.kotlin.backend.konan.KtBcLibraryWriter
+import org.jetbrains.kotlin.backend.konan.SplitLibraryWriter
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -53,6 +56,7 @@ import org.jetbrains.kotlin.types.typeUtil.isUnit
 internal fun emitLLVM(context: Context) {
 
         val irModule = context.irModule!!
+
         // Note that we don't set module target explicitly.
         // It is determined by the target of runtime.bc
         // (see Llvm class in ContextUtils)
@@ -61,7 +65,6 @@ internal fun emitLLVM(context: Context) {
         val llvmModule = LLVMModuleCreateWithName("out")!! // TODO: dispose
         context.llvmModule = llvmModule
         context.debugInfo.builder = DICreateBuilder(llvmModule)
-
         context.llvmDeclarations = createLlvmDeclarations(context)
 
         val phaser = PhaseManager(context)
@@ -70,31 +73,44 @@ internal fun emitLLVM(context: Context) {
             irModule.acceptVoid(RTTIGeneratorVisitor(context))
         }
 
-
         generateDebugInfoHeader(context)
 
         phaser.phase(KonanPhase.CODEGEN) {
             irModule.acceptVoid(CodeGeneratorVisitor(context))
         }
 
-        phaser.phase(KonanPhase.METADATOR) {
-            MetadataGenerator(context).addLinkData()
-        }
-
-        phaser.phase(KonanPhase.BITCODE_LINKER) {
-            for (library in context.config.nativeLibraries) {
-                val libraryModule = parseBitcodeFile(library)
-                val failed = LLVMLinkModules2(llvmModule, libraryModule)
-                if (failed != 0) {
-                    throw Error("failed to link $library") // TODO: retrieve error message from LLVM.
-                }
-            }
-        }
-
         if (context.shouldContainDebugInfo()) {
             DIFinalize(context.debugInfo.builder)
         }
-        LLVMWriteBitcodeToFile(llvmModule, context.config.configuration.get(KonanConfigKeys.BITCODE_FILE)!!)
+        
+        val output = context.config.configuration.get(KonanConfigKeys.BITCODE_FILE)!!
+
+        if (context.config.configuration.get(KonanConfigKeys.NOLINK)?:false == false) {
+            LLVMWriteBitcodeToFile(llvmModule, output)
+        } else {
+
+            //val library = KtBcLibraryWriter(context, output, llvmModule)
+            val library2 = SplitLibraryWriter(context, output)
+
+            phaser.phase(KonanPhase.METADATOR) {
+                //library.addLinkData(context.serializedLinkData!!)
+                library2.addLinkData(context.serializedLinkData!!)
+            }
+
+            //library.addKotlinBitcode(llvmModule)
+            library2.addKotlinBitcode(llvmModule)
+
+            phaser.phase(KonanPhase.BITCODE_LINKER) {
+                context.config.nativeLibraries.forEach {
+                    //library.addNativeBitcode(it)
+                    library2.addNativeBitcode(it)
+                }
+            }
+
+            //library.commit()
+            library2.commit()
+            context.library = library2
+        }
 }
 
 

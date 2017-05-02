@@ -40,8 +40,8 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         }
 
     internal val libraries: List<KonanLibraryReader> by lazy {
-        // Here we have chosen a particular .kt.bc KonanLibraryReader implementation
-        libraryNames.map{it -> KtBcLibraryReader(it, configuration)}
+        // Here we have chosen a particular KonanLibraryReader implementation
+        libraryNames.map{it -> SplitLibraryReader(it, configuration)}
     }
 
     private val loadedDescriptors = loadLibMetadata()
