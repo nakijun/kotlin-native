@@ -231,11 +231,28 @@ task dist_runtime(type: Copy) {
     dependsOn ':backend.native:hostStart'
 
     destinationDir file('dist')
+//
+//    from(project(':runtime').file('build')) {
+//        include('*/*.bc')
+//        into('lib')
+//    }
 
+    // We manually construct the stdlib.klib with its native .bc addons.
     from(project(':runtime').file('build')) {
-        include('*/*.bc')
+        include('*/stdlib.klib/**')
         into('lib')
     }
+    from(project(':runtime').file('build/host')) {
+        include('*.bc')
+        exclude('stdlib.kt.bc')
+        into('lib/host/stdlib.klib/native')
+    }
+    from(project(':runtime').file('build/host/start.klib/kotlin/')) {
+        include('kotlin.bc')
+        rename('kotlin.bc', 'start.kt.bc')
+        into('lib/host/stdlib.klib/native')
+    }
+
 }
 
 task cross_dist_runtime(type: Copy) {
