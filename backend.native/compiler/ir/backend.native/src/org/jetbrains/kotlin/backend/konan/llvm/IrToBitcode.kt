@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
 import org.jetbrains.kotlin.backend.konan.Context
 import org.jetbrains.kotlin.backend.konan.KonanConfigKeys
 import org.jetbrains.kotlin.backend.konan.KonanPhase
+import org.jetbrains.kotlin.backend.konan.LinkData
 import org.jetbrains.kotlin.backend.konan.PhaseManager
 import org.jetbrains.kotlin.backend.konan.descriptors.*
 import org.jetbrains.kotlin.backend.konan.ir.*
@@ -88,31 +89,30 @@ internal fun emitLLVM(context: Context) {
         if (context.config.configuration.get(KonanConfigKeys.NOLINK)?:false == false) {
             LLVMWriteBitcodeToFile(llvmModule, output)
         } else {
-
-            //val library = KtBcLibraryWriter(context, output, llvmModule)
-            val library2 = SplitLibraryWriter(context, output)
-
-            phaser.phase(KonanPhase.METADATOR) {
-                //library.addLinkData(context.serializedLinkData!!)
-                library2.addLinkData(context.serializedLinkData!!)
-            }
-
-            //library.addKotlinBitcode(llvmModule)
-            library2.addKotlinBitcode(llvmModule)
-
-            phaser.phase(KonanPhase.BITCODE_LINKER) {
-                context.config.nativeLibraries.forEach {
-                    //library.addNativeBitcode(it)
-                    library2.addNativeBitcode(it)
-                }
-            }
-
-            //library.commit()
-            library2.commit()
-            context.library = library2
+            context.library = buildLibrary(phaser, context.config.nativeLibraries, context.serializedLinkData!!, output, llvmModule)
         }
 }
 
+
+internal fun buildLibrary(phaser: PhaseManager, natives: List<String>, linkData: LinkData, output: String, llvmModule: LLVMModuleRef): KonanLibraryWriter {
+    //val library = KtBcLibraryWriter(output, llvmModule)
+    val library = SplitLibraryWriter(output)
+
+    library.addKotlinBitcode(llvmModule)
+
+    phaser.phase(KonanPhase.METADATOR) {
+        library.addLinkData(linkData)
+    }
+
+    phaser.phase(KonanPhase.BITCODE_LINKER) {
+        natives.forEach {
+            library.addNativeBitcode(it)
+        }
+    }
+
+    library.commit()
+    return library
+}
 
 internal fun verifyModule(llvmModule: LLVMModuleRef, current: String = "") {
     memScoped {

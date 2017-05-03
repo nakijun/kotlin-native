@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.backend.konan.serialization.Base64
 import org.jetbrains.kotlin.backend.konan.serialization.deserializeModule
 import java.io.File
+import java.nio.file.Files
 
 class LinkData(
     val abiVersion: Int,
@@ -113,26 +114,23 @@ interface KonanLibraryWriter {
 }
 
 internal abstract class FileBasedLibraryWriter (
-    val context: Context,
     val file: File
     ): KonanLibraryWriter {
 }
 
-// Eliminate any dependence on the context
-internal class KtBcLibraryWriter(context: Context, file: File, val llvmModule: LLVMModuleRef) 
-    : FileBasedLibraryWriter(context, file) {
+internal class KtBcLibraryWriter(file: File, val llvmModule: LLVMModuleRef) 
+    : FileBasedLibraryWriter(file) {
 
-    public constructor(context: Context, path: String, llvmModule: LLVMModuleRef) 
-        : this(context, File(path), llvmModule)
+    public constructor(path: String, llvmModule: LLVMModuleRef) 
+        : this(File(path), llvmModule)
 
     override fun addKotlinBitcode(llvmModule: LLVMModuleRef) {
         // This is a noop for .kt.bc based libraries,
         // because the bitcode itself is the container.
-        assert(llvmModule == context.llvmModule)
     }
 
     override fun addLinkData(linkData: LinkData) {
-        MetadataGenerator(context).addLinkData(linkData)
+        MetadataGenerator(llvmModule).addLinkData(linkData)
     }
 
     override fun addNativeBitcode(library: String) {
@@ -149,8 +147,8 @@ internal class KtBcLibraryWriter(context: Context, file: File, val llvmModule: L
     }
 }
 
-internal class SplitLibraryWriter(context: Context, file: File): FileBasedLibraryWriter(context, file) {
-    public constructor(context: Context, path: String): this(context, File(path))
+internal class SplitLibraryWriter(file: File): FileBasedLibraryWriter(file) {
+    public constructor(path: String): this(File(path))
 
     val kotlinDir = File(file, "kotlin")
     val linkdataDir = File(file, "linkdata")
@@ -178,16 +176,12 @@ internal class SplitLibraryWriter(context: Context, file: File): FileBasedLibrar
     }
 
     override fun addLinkData(linkData: LinkData) {
-        SplitMetadataGenerator(context, linkdataDir).addLinkData(linkData)
+        SplitMetadataGenerator(linkdataDir).addLinkData(linkData)
     }
 
     override fun addNativeBitcode(library: String) {
-
-        val libraryModule = parseBitcodeFile(library)
-        val failed = LLVMLinkModules2(llvmModule!!, libraryModule)
-        if (failed != 0) {
-            throw Error("failed to link $library") // TODO: retrieve error message from LLVM.
-        }
+        val basename = File(library).getName()
+        Files.copy(File(library).toPath(), File(nativeDir, basename).toPath()) 
     }
 
     override fun commit() {

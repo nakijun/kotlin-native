@@ -177,7 +177,7 @@ override fun loadSerializedPackageFragment(fqName: String): String {
     }
 }
 
-internal class MetadataGenerator(override val context: Context): ContextUtils {
+internal class MetadataGenerator(val llvmModule: LLVMModuleRef) {
 
     private fun metadataNode(args: List<LLVMValueRef?>): LLVMValueRef {
         return LLVMMDNode(args.toCValues(), args.size)!!
@@ -190,7 +190,7 @@ internal class MetadataGenerator(override val context: Context): ContextUtils {
     }
 
     private fun emitModuleMetadata(name: String, md: LLVMValueRef?) {
-        LLVMAddNamedMetadataOperand(context.llvmModule, name, md)
+        LLVMAddNamedMetadataOperand(llvmModule, name, md)
     }
 
     private fun metadataString(str: String): LLVMValueRef {
@@ -219,8 +219,7 @@ internal class MetadataGenerator(override val context: Context): ContextUtils {
     }
 }
 
-internal class SplitMetadataGenerator(
-    override val context: Context, val file: File): ContextUtils {
+internal class SplitMetadataGenerator(val file: File) {
 
     fun addLinkData(linkData: LinkData) {
 
