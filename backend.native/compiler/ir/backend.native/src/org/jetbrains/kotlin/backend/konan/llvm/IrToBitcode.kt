@@ -84,12 +84,14 @@ internal fun emitLLVM(context: Context) {
             DIFinalize(context.debugInfo.builder)
         }
         
-        val output = context.config.configuration.get(KonanConfigKeys.BITCODE_FILE)!!
+        //val output = context.config.configuration.get(KonanConfigKeys.BITCODE_FILE)!!
 
         if (context.config.configuration.get(KonanConfigKeys.NOLINK)?:false == false) {
+            val output = context.config.configuration.get(KonanConfigKeys.BITCODE_FILE)!!
             LLVMWriteBitcodeToFile(llvmModule, output)
         } else {
-            context.library = buildLibrary(phaser, context.config.nativeLibraries, context.serializedLinkData!!, output, llvmModule)
+            val library = context.config.configuration.get(KonanConfigKeys.LIBRARY_FILE)!!
+            context.library = buildLibrary(phaser, context.config.nativeLibraries, context.serializedLinkData!!, library, llvmModule)
         }
 }
 

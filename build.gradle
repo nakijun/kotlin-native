@@ -248,8 +248,8 @@ task dist_runtime(type: Copy) {
         into('lib/host/stdlib.klib/native')
     }
     from(project(':runtime').file('build/host/start.klib/kotlin/')) {
-        include('kotlin.bc')
-        rename('kotlin.bc', 'start.kt.bc')
+        include('program.kt.bc')
+        rename('program.kt.bc', 'start.kt.bc')
         into('lib/host/stdlib.klib/native')
     }
 

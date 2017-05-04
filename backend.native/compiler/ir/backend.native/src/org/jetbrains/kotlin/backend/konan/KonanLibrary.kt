@@ -113,12 +113,12 @@ interface KonanLibraryWriter {
     fun commit()
 }
 
-internal abstract class FileBasedLibraryWriter (
+abstract class FileBasedLibraryWriter (
     val file: File
     ): KonanLibraryWriter {
 }
 
-internal class KtBcLibraryWriter(file: File, val llvmModule: LLVMModuleRef) 
+class KtBcLibraryWriter(file: File, val llvmModule: LLVMModuleRef) 
     : FileBasedLibraryWriter(file) {
 
     public constructor(path: String, llvmModule: LLVMModuleRef) 
@@ -145,18 +145,22 @@ internal class KtBcLibraryWriter(file: File, val llvmModule: LLVMModuleRef)
     override fun commit() {
         LLVMWriteBitcodeToFile(llvmModule, file.path)
     }
+
+    companion object {
+        fun mainBitcodeFile(library: File): File = library
+    }
 }
 
-internal class SplitLibraryWriter(file: File): FileBasedLibraryWriter(file) {
+class SplitLibraryWriter(file: File): FileBasedLibraryWriter(file) {
     public constructor(path: String): this(File(path))
 
-    val kotlinDir = File(file, "kotlin")
+    val kotlinDir = kotlinDir(file)
     val linkdataDir = File(file, "linkdata")
     val nativeDir = File(file, "native")
     val resourcesDir = File(file, "resources")
     // TODO: Experiment with separate bitcode files.
     // Per package or per class.
-    val kotlinBitcode = File(kotlinDir, "kotlin.bc")
+    val kotlinBitcode = kotlinBitcode(file)
 
     init {
         // TODO: figure out the proper policy here.
@@ -189,5 +193,14 @@ internal class SplitLibraryWriter(file: File): FileBasedLibraryWriter(file) {
         // Or should we zip the directory?
     }
 
+    companion object {
+        fun kotlinDir(library: File) = File(library, "kotlin")
+
+        fun kotlinBitcode(library: File)
+            = File(kotlinDir(library), "program.kt.bc")
+
+        fun mainBitcodeFile(libraryName: String) 
+            = kotlinBitcode(File(libraryName)).path
+    }
 }
 

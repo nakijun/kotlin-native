@@ -27,6 +27,8 @@ class KonanConfigKeys {
                 = CompilerConfigurationKey.create("native library file paths")
         val BITCODE_FILE: CompilerConfigurationKey<String> 
                 = CompilerConfigurationKey.create("emitted bitcode file path")
+        val LIBRARY_FILE: CompilerConfigurationKey<String> 
+                = CompilerConfigurationKey.create("library file path")
         val EXECUTABLE_FILE: CompilerConfigurationKey<String> 
                 = CompilerConfigurationKey.create("final executable file path")
         val RUNTIME_FILE: CompilerConfigurationKey<String?> 

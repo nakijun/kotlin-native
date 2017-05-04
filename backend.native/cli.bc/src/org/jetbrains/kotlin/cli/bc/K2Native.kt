@@ -102,18 +102,20 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                 // TODO: Collect all the explicit file names into an object
                 // and teach the compiler to work with temporaries and -save-temps.
                 val bitcodeFile = if (arguments.nolink) {
-                    arguments.outputFile ?: "program.kt.bc"
+                    val library = arguments.outputFile ?: "library.klib"
+                    put(LIBRARY_FILE, library)
+                    SplitLibraryWriter.mainBitcodeFile(library!!)
                 } else {
+                    put(EXECUTABLE_FILE,
+                        arguments.outputFile ?: "program.kexe")
                     "${arguments.outputFile ?: "program"}.kt.bc"
                 }
                 put(BITCODE_FILE, bitcodeFile)
-
+println("bitcodeFile = $bitcodeFile")
                 // This is a decision we could change
                 put(CommonConfigurationKeys.MODULE_NAME, bitcodeFile)
                 put(ABI_VERSION, 1)
 
-                put(EXECUTABLE_FILE,
-                        arguments.outputFile ?: "program.kexe")
                 if (arguments.runtimeFile != null)
                     put(RUNTIME_FILE, arguments.runtimeFile)
                 if (arguments.propertyFile != null)
