@@ -186,6 +186,7 @@ internal class SplitLibraryWriter(file: File): FileBasedLibraryWriter(file) {
 
     override fun commit() {
         // This is no-op for the Split library.
+        // Or should we zip the directory?
     }
 
 }
