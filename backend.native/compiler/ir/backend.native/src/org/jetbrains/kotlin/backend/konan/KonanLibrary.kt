@@ -164,7 +164,7 @@ class SplitLibraryWriter(file: File): FileBasedLibraryWriter(file) {
 
     init {
         // TODO: figure out the proper policy here.
-        file.delete()
+        file.deleteRecursively()
         file.mkdirs()
         kotlinDir.mkdirs()
         linkdataDir.mkdirs()
