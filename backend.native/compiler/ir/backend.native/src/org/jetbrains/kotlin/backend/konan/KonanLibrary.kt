@@ -91,6 +91,7 @@ class KtBcLibraryReader(file: File, configuration: CompilerConfiguration)
 
 }
 
+// TODO: Get rid of the configuration here.
 class SplitLibraryReader(file: File, configuration: CompilerConfiguration) 
     : FileBasedLibraryReader(file, configuration, SplitMetadataReader(file)) {
 
@@ -99,8 +100,16 @@ class SplitLibraryReader(file: File, configuration: CompilerConfiguration)
     private val File.dirAbsolutePaths: List<String>
         get() = this.listFiles().toList().map{it->it.absolutePath}
 
+    private val targetDir: File
+        get() {
+            val dir = File(file, configuration.get(KonanConfigKeys.TARGET) ?: "host")
+            println(dir)
+            return dir
+        }
+
     override val bitcodePaths: List<String>
-        get() = File(file, "kotlin").dirAbsolutePaths + File(file, "native").dirAbsolutePaths
+        get() = File(targetDir, "kotlin").dirAbsolutePaths + 
+                File(targetDir, "native").dirAbsolutePaths
 
 }
 /* ------------ writer part ----------------*/
@@ -151,16 +160,17 @@ class KtBcLibraryWriter(file: File, val llvmModule: LLVMModuleRef)
     }
 }
 
-class SplitLibraryWriter(file: File): FileBasedLibraryWriter(file) {
-    public constructor(path: String): this(File(path))
+class SplitLibraryWriter(file: File, val target: String): FileBasedLibraryWriter(file) {
+    public constructor(path: String, target: String): this(File(path), target)
 
-    val kotlinDir = kotlinDir(file)
+    val kotlinDir = kotlinDir(file, target)
+    val targetDir = targetDir(file, target)
     val linkdataDir = File(file, "linkdata")
-    val nativeDir = File(file, "native")
+    val nativeDir = File(targetDir, "native")
     val resourcesDir = File(file, "resources")
     // TODO: Experiment with separate bitcode files.
     // Per package or per class.
-    val kotlinBitcode = kotlinBitcode(file)
+    val kotlinBitcode = kotlinBitcode(file, target)
 
     init {
         // TODO: figure out the proper policy here.
@@ -194,13 +204,15 @@ class SplitLibraryWriter(file: File): FileBasedLibraryWriter(file) {
     }
 
     companion object {
-        fun kotlinDir(library: File) = File(library, "kotlin")
+        fun targetDir(library: File, target: String) = File(library, target)
 
-        fun kotlinBitcode(library: File)
-            = File(kotlinDir(library), "program.kt.bc")
+        fun kotlinDir(library: File, target: String) = File(targetDir(library, target), "kotlin")
 
-        fun mainBitcodeFile(libraryName: String) 
-            = kotlinBitcode(File(libraryName)).path
+        fun kotlinBitcode(library: File, target: String)
+            = File(kotlinDir(library, target), "program.kt.bc")
+
+        fun mainBitcodeFile(libraryName: String, target: String) 
+            = kotlinBitcode(File(libraryName), target).path
     }
 }
 

@@ -238,19 +238,19 @@ task dist_runtime(type: Copy) {
 //    }
 
     // We manually construct the stdlib.klib with its native .bc addons.
-    from(project(':runtime').file('build')) {
-        include('*/stdlib.klib/**')
-        into('lib')
+    from(project(':runtime').file('build/stdlib.dir')) {
+        include('**')
+        into('klib/stdlib')
     }
     from(project(':runtime').file('build/host')) {
         include('*.bc')
         exclude('stdlib.kt.bc')
-        into('lib/host/stdlib.klib/native')
+        into('klib/stdlib/host/native')
     }
-    from(project(':runtime').file('build/host/start.klib/kotlin/')) {
+    from(project(':runtime').file('build/start.dir/host/kotlin')) {
         include('program.kt.bc')
         rename('program.kt.bc', 'start.kt.bc')
-        into('lib/host/stdlib.klib/native')
+        into('klib/stdlib/host/native')
     }
 
 }
@@ -262,9 +262,23 @@ task cross_dist_runtime(type: Copy) {
 
     destinationDir file('dist')
 
-    from(project(':runtime').file('build')) {
-        include('*/*.bc')
-        into('lib')
+    from(project(':runtime').file('build/stdlib.dir')) {
+        include('**')
+        into('klib/stdlib')
+    }
+    targetList.each { targetName ->
+
+        from(project(':runtime').file("build/$targetName")) {
+            include("*.bc")
+            eachFile {println("eachfile= $it")}
+            into("klib/stdlib/$targetName/native")
+        }
+        from(project(':runtime').file("build/start.dir/$targetName/kotlin")) {
+            include("program.kt.bc")
+            rename('program.kt.bc', 'start.kt.bc')
+            into("klib/stdlib/$targetName/native")
+        }
+
     }
 }
 

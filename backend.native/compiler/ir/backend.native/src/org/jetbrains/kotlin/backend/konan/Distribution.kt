@@ -22,6 +22,7 @@ import java.io.File
 class Distribution(val config: CompilerConfiguration) {
 
     val targetManager = TargetManager(config)
+    // TODO: get rid of the host?
     val target = 
         if (!targetManager.crossCompile) "host" 
         else targetManager.current.name.toLowerCase()
@@ -40,16 +41,14 @@ class Distribution(val config: CompilerConfiguration) {
         ?: "$konanHome/konan/konan.properties"
     val properties = KonanProperties(propertyFile)
 
-    val lib = "$konanHome/lib/$target"
+    val klib = "$konanHome/klib"
 
     val dependenciesDir = "$konanHome/dependencies"
     val dependencies = properties.propertyList("dependencies.$suffix")
 
-    val stdlib = "$lib/stdlib.klib"
-    //val start = "$lib/start.kt.bc"
-    //val launcher = "$lib/launcher.bc"
+    val stdlib = "$klib/stdlib"
     val runtime = config.get(KonanConfigKeys.RUNTIME_FILE) 
-        ?: "$stdlib/native/runtime.bc"
+        ?: "$stdlib/$target/native/runtime.bc"
 
     val llvmHome = "$dependenciesDir/${properties.propertyString("llvmHome.$hostSuffix")}"
     val sysRoot = "$dependenciesDir/${properties.propertyString("sysRoot.$hostSuffix")}"

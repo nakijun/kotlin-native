@@ -95,16 +95,20 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                         arguments.libraries.toNonNullList())
 
                 put(LINKER_ARGS, arguments.linkerArguments.toNonNullList())
+                if (arguments.target != null)
+                    put(TARGET, arguments.target)
 
                 put(NATIVE_LIBRARY_FILES,
                         arguments.nativeLibraries.toNonNullList())
 
                 // TODO: Collect all the explicit file names into an object
                 // and teach the compiler to work with temporaries and -save-temps.
+                // TODO: remove it from the config. It is too complex already.
                 val bitcodeFile = if (arguments.nolink) {
                     val library = arguments.outputFile ?: "library.klib"
                     put(LIBRARY_FILE, library)
-                    SplitLibraryWriter.mainBitcodeFile(library!!)
+                    // TODO: make sure this host is turned into a real target value.
+                    SplitLibraryWriter.mainBitcodeFile(library!!, arguments.target ?: "host")
                 } else {
                     put(EXECUTABLE_FILE,
                         arguments.outputFile ?: "program.kexe")
@@ -120,8 +124,6 @@ println("bitcodeFile = $bitcodeFile")
                     put(RUNTIME_FILE, arguments.runtimeFile)
                 if (arguments.propertyFile != null)
                     put(PROPERTY_FILE, arguments.propertyFile)
-                if (arguments.target != null)
-                    put(TARGET, arguments.target)
                 put(LIST_TARGETS, arguments.listTargets)
                 put(OPTIMIZATION, arguments.optimization)
                 put(DEBUG, arguments.debug)

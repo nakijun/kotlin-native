@@ -102,14 +102,20 @@ internal fun emitLLVM(context: Context) {
             LLVMWriteBitcodeToFile(llvmModule, output)
         } else {
             val library = context.config.configuration.get(KonanConfigKeys.LIBRARY_FILE)!!
-            context.library = buildLibrary(phaser, context.config.nativeLibraries, context.serializedLinkData!!, library, llvmModule)
+            context.library = buildLibrary(
+                phaser, 
+                context.config.nativeLibraries, 
+                context.serializedLinkData!!, 
+                context.config.configuration.get(KonanConfigKeys.TARGET)!!, 
+                library, 
+                llvmModule)
         }
 }
 
 
-internal fun buildLibrary(phaser: PhaseManager, natives: List<String>, linkData: LinkData, output: String, llvmModule: LLVMModuleRef): KonanLibraryWriter {
+internal fun buildLibrary(phaser: PhaseManager, natives: List<String>, linkData: LinkData, target: String, output: String, llvmModule: LLVMModuleRef): KonanLibraryWriter {
     //val library = KtBcLibraryWriter(output, llvmModule)
-    val library = SplitLibraryWriter(output)
+    val library = SplitLibraryWriter(output, target)
 
     library.addKotlinBitcode(llvmModule)
 
