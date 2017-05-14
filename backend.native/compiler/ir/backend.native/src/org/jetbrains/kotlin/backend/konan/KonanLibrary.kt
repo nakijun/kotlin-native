@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.backend.konan.llvm.SplitMetadataReader
 import org.jetbrains.kotlin.backend.konan.llvm.NamedModuleData
 import org.jetbrains.kotlin.backend.konan.llvm.parseBitcodeFile
 import org.jetbrains.kotlin.backend.konan.llvm.createLlvmDeclarations
+import org.jetbrains.kotlin.backend.konan.TargetManager
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.backend.konan.serialization.Base64
@@ -98,11 +99,14 @@ class SplitLibraryReader(file: File, configuration: CompilerConfiguration)
     public constructor(path: String, configuration: CompilerConfiguration) : this(File(path), configuration) 
 
     private val File.dirAbsolutePaths: List<String>
-        get() = this.listFiles().toList().map{it->it.absolutePath}
+        get() = this.listFiles()!!.toList()!!.map{it->it.absolutePath}
 
     private val targetDir: File
         get() {
-            val dir = File(file, configuration.get(KonanConfigKeys.TARGET) ?: "host")
+            // TODO: Make it a function
+            // TODO: make something about it here.
+            val target = configuration.get(KonanConfigKeys.TARGET) ?: TargetManager.host.name.toLowerCase()
+            val dir = File(file, target)
             println(dir)
             return dir
         }

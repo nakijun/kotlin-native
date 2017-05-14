@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.backend.konan.LinkData
 import org.jetbrains.kotlin.backend.konan.PhaseManager
 import org.jetbrains.kotlin.backend.konan.descriptors.*
 import org.jetbrains.kotlin.backend.konan.ir.*
+import org.jetbrains.kotlin.backend.konan.TargetManager
 import org.jetbrains.kotlin.backend.konan.KonanLibraryWriter
 import org.jetbrains.kotlin.backend.konan.KtBcLibraryWriter
 import org.jetbrains.kotlin.backend.konan.SplitLibraryWriter
@@ -106,7 +107,7 @@ internal fun emitLLVM(context: Context) {
                 phaser, 
                 context.config.nativeLibraries, 
                 context.serializedLinkData!!, 
-                context.config.configuration.get(KonanConfigKeys.TARGET)!!, 
+                context.config.configuration.get(KonanConfigKeys.TARGET) ?: TargetManager.host.name.toLowerCase(),
                 library, 
                 llvmModule)
         }

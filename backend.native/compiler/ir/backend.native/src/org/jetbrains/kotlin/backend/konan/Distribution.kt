@@ -23,9 +23,7 @@ class Distribution(val config: CompilerConfiguration) {
 
     val targetManager = TargetManager(config)
     // TODO: get rid of the host?
-    val target = 
-        if (!targetManager.crossCompile) "host" 
-        else targetManager.current.name.toLowerCase()
+    val target = targetManager.current.name.toLowerCase()
     val suffix = targetManager.currentSuffix()
     val hostSuffix = TargetManager.host.suffix
     init { if (!targetManager.crossCompile) assert(suffix == hostSuffix) }

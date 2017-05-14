@@ -153,7 +153,7 @@ kotlinNativeInterop {
      compilerOpts '-fPIC'
      linkerOpts '-fPIC'
      linker 'clang++'
-     linkOutputs ':common:hostHash'
+     linkOutputs ":common:${host}Hash"
 
      headers fileTree('../common/src/hash/headers') {
        include '**/*.h'
