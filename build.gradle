@@ -241,7 +241,7 @@ task commonDistRuntime(type: Copy) {
     destinationDir file('dist')
 
     // Target independant common part.
-    from(project(':runtime').file('build/stdlib.dir')) {
+    from(project(':runtime').file('build/stdlib')) {
         include('**')
         into('klib/stdlib')
     }
@@ -265,7 +265,7 @@ targetList.each { target ->
             eachFile {println("eachfile= $it")}
             into("klib/stdlib/$target/native")
         }
-        from(project(':runtime').file("build/start.dir/$target/kotlin")) {
+        from(project(':runtime').file("build/start/$target/kotlin")) {
             include("program.kt.bc")
             rename('program.kt.bc', 'start.kt.bc')
             into("klib/stdlib/$target/native")

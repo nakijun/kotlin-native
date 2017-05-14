@@ -48,7 +48,6 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
 
     internal val nativeLibraries: List<String> = configuration.getList(KonanConfigKeys.NATIVE_LIBRARY_FILES)
 
-
     fun loadLibMetadata(): List<ModuleDescriptorImpl> {
 
         val allMetadata = mutableListOf<ModuleDescriptorImpl>()

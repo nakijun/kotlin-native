@@ -164,8 +164,8 @@ internal class LinkStage(val context: Context) {
     val suffix = targetManager.currentSuffix()
 
     val optimize = config.get(KonanConfigKeys.OPTIMIZATION) ?: false
-    val emitted = config.get(KonanConfigKeys.BITCODE_FILE)!!
     val nomain = config.get(KonanConfigKeys.NOMAIN) ?: false
+    val emitted = context.bitcodeFileName
     val libraries = context.config.libraries
 
     fun llvmLto(files: List<BitcodeFile>): ObjectFile {

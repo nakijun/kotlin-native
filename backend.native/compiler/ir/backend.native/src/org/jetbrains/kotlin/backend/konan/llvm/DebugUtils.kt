@@ -22,6 +22,8 @@ import llvm.*
 import org.jetbrains.kotlin.backend.konan.Context
 import org.jetbrains.kotlin.backend.konan.KonanConfigKeys
 import org.jetbrains.kotlin.backend.konan.KonanVersion
+import org.jetbrains.kotlin.backend.konan.SplitLibraryWriter
+import org.jetbrains.kotlin.backend.konan.TargetManager
 import org.jetbrains.kotlin.backend.konan.util.File
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -94,7 +96,23 @@ internal fun String?.toFileAndFolder():FileAndFolder {
 
 internal fun generateDebugInfoHeader(context: Context) {
     if (context.shouldContainDebugInfo()) {
-        val path = context.config.configuration.get(KonanConfigKeys.BITCODE_FILE).toFileAndFolder()
+
+        // TODO: discuss with Vasily. 
+        // Don't push. There should be a better way.
+        // What does those paths actually mean?
+        // A module name?
+
+        //val path = context.config.configuration.get(KonanConfigKeys.BITCODE_FILE).toFileAndFolder()
+        val output = if (context.config.configuration.get(KonanConfigKeys.NOLINK)?:false == false) {
+            val program = context.config.configuration.get(KonanConfigKeys.PROGRAM_NAME)!!
+            "$program}.kt.bc"
+        } else {
+            val libraryName = context.config.configuration.get(KonanConfigKeys.LIBRARY_NAME)!!
+            val targetName = TargetManager(context.config.configuration).currentName
+            SplitLibraryWriter.mainBitcodeFile(libraryName, targetName)
+        }
+        val path = output.toFileAndFolder()
+
         context.debugInfo.module = DICreateModule(
                 builder = context.debugInfo.builder,
                 scope = context.llvmModule as DIScopeOpaqueRef,

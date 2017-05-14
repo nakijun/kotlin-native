@@ -265,6 +265,7 @@ internal class Context(config: KonanConfig) : KonanBackendContext(config) {
 
     lateinit var llvm: Llvm
     lateinit var llvmDeclarations: LlvmDeclarations
+    lateinit var bitcodeFileName: String
     lateinit var library: KonanLibraryWriter
 
     var phase: KonanPhase? = null

@@ -85,10 +85,10 @@ internal fun emitLLVM(context: Context) {
             DIFinalize(context.debugInfo.builder)
         }
         
-        //val output = context.config.configuration.get(KonanConfigKeys.BITCODE_FILE)!!
-
         if (context.config.configuration.get(KonanConfigKeys.NOLINK)?:false == false) {
-            val output = context.config.configuration.get(KonanConfigKeys.BITCODE_FILE)!!
+            val program = context.config.configuration.get(KonanConfigKeys.PROGRAM_NAME)!!
+            val output = "$program}.kt.bc"
+            context.bitcodeFileName = output
 
             phaser.phase(KonanPhase.BITCODE_LINKER) {
                 for (library in context.config.nativeLibraries) {
@@ -102,17 +102,24 @@ internal fun emitLLVM(context: Context) {
 
             LLVMWriteBitcodeToFile(llvmModule, output)
         } else {
-            val library = context.config.configuration.get(KonanConfigKeys.LIBRARY_FILE)!!
-            context.library = buildLibrary(
+
+            val libraryName = context.config.configuration.get(KonanConfigKeys.LIBRARY_NAME)!!
+            val targetName = TargetManager(context.config.configuration).currentName
+
+            val library = buildLibrary(
                 phaser, 
                 context.config.nativeLibraries, 
                 context.serializedLinkData!!, 
-                context.config.configuration.get(KonanConfigKeys.TARGET) ?: TargetManager.host.name.toLowerCase(),
-                library, 
+                targetName,
+                libraryName, 
                 llvmModule)
+
+            context.library = library
+
+            context.bitcodeFileName = 
+                SplitLibraryWriter.mainBitcodeFile(libraryName, targetName)
         }
 }
-
 
 internal fun buildLibrary(phaser: PhaseManager, natives: List<String>, linkData: LinkData, target: String, output: String, llvmModule: LLVMModuleRef): KonanLibraryWriter {
     //val library = KtBcLibraryWriter(output, llvmModule)
