@@ -97,21 +97,11 @@ internal fun String?.toFileAndFolder():FileAndFolder {
 internal fun generateDebugInfoHeader(context: Context) {
     if (context.shouldContainDebugInfo()) {
 
-        // TODO: discuss with Vasily. 
-        // Don't push. There should be a better way.
-        // What does those paths actually mean?
-        // A module name?
-
-        //val path = context.config.configuration.get(KonanConfigKeys.BITCODE_FILE).toFileAndFolder()
-        val output = if (context.config.configuration.get(KonanConfigKeys.NOLINK)?:false == false) {
-            val program = context.config.configuration.get(KonanConfigKeys.PROGRAM_NAME)!!
-            "$program}.kt.bc"
+        val path = if (!context.config.configuration.getBoolean(KonanConfigKeys.NOLINK)) {
+            context.config.configuration.get(KonanConfigKeys.EXECUTABLE_FILE)!!
         } else {
-            val libraryName = context.config.configuration.get(KonanConfigKeys.LIBRARY_NAME)!!
-            val targetName = TargetManager(context.config.configuration).currentName
-            SplitLibraryWriter.mainBitcodeFile(libraryName, targetName)
-        }
-        val path = output.toFileAndFolder()
+            context.config.configuration.get(KonanConfigKeys.LIBRARY_NAME)!!
+        }.toFileAndFolder()
 
         context.debugInfo.module = DICreateModule(
                 builder = context.debugInfo.builder,
