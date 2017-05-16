@@ -103,18 +103,15 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
 
                 // TODO: Collect all the explicit file names into an object
                 // and teach the compiler to work with temporaries and -save-temps.
-                val libraryFile = arguments.outputFile ?: "library"
-                if (arguments.nolink) {
+                val library = arguments.outputFile ?: "library"
+                if (arguments.nolink) 
                     put(LIBRARY_NAME, library)
                     put(LIBRARY_FILE, "${library}.klib")
-                }
-
-                val programFile = arguments.outputFile ?: "program"
+                val program = arguments.outputFile ?: "program.kexe"
                 if (!arguments.nolink) {
                     put(PROGRAM_NAME,program)
                     put(EXECUTABLE_FILE,"${program}.kexe")
                 }
-
                 // This is a decision we could change
                 val module = if (arguments.nolink) library else program
                 put(CommonConfigurationKeys.MODULE_NAME, module)
