@@ -206,9 +206,10 @@ fun handleExceptionContinuation(x: (Throwable) -> Unit): Continuation<Any?> = ob
     @TaskAction
     void executeTest() {
         createOutputDirectory()
-        def exe = "${buildExePath()}.kexe"
+        def program = buildExePath()
+        def exe = "${program}.kexe"
 
-        compileTest(buildCompileList(), exe)
+        compileTest(buildCompileList(), program)
 
         if (!run) {
             println "to be executed manually: $exe"
