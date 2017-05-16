@@ -234,7 +234,6 @@ internal class SplitMetadataGenerator(val file: File) {
         linkData.fragments.forEachIndexed { index, it ->
             val name = linkData.fragmentNames[index] 
             val realName = if (name == "") "<root>" else name
-            println("realName = $realName")
             File(file, realName).writeText(it)
         }
     }
