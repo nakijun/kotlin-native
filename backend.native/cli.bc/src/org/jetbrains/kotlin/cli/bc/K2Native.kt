@@ -90,6 +90,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
 
                 put(NOSTDLIB, arguments.nostdlib)
                 put(NOLINK, arguments.nolink)
+                put(NOPACK, arguments.nopack)
                 put(NOMAIN, arguments.nomain)
                 put(LIBRARY_FILES,
                         arguments.libraries.toNonNullList())

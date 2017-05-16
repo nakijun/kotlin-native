@@ -104,6 +104,7 @@ internal fun emitLLVM(context: Context) {
         } else {
 
             val libraryName = context.config.configuration.get(KonanConfigKeys.LIBRARY_NAME)!!
+            val nopack = context.config.configuration.getBoolean(KonanConfigKeys.NOPACK)
             val targetName = TargetManager(context.config.configuration).currentName
 
             val library = buildLibrary(
@@ -112,7 +113,8 @@ internal fun emitLLVM(context: Context) {
                 context.serializedLinkData!!, 
                 targetName,
                 libraryName, 
-                llvmModule)
+                llvmModule,
+                nopack)
 
             context.library = library
 
@@ -121,10 +123,10 @@ internal fun emitLLVM(context: Context) {
         }
 }
 
-internal fun buildLibrary(phaser: PhaseManager, natives: List<String>, linkData: LinkData, target: String, output: String, llvmModule: LLVMModuleRef): KonanLibraryWriter {
+internal fun buildLibrary(phaser: PhaseManager, natives: List<String>, linkData: LinkData, target: String, output: String, llvmModule: LLVMModuleRef, nopack: Boolean): KonanLibraryWriter {
     // TODO: May be we need a factory?
     //val library = KtBcLibraryWriter(output, llvmModule)
-    val library = SplitLibraryWriter(output, target)
+    val library = SplitLibraryWriter(output, target, nopack)
 
     library.addKotlinBitcode(llvmModule)
 

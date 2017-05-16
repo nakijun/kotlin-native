@@ -47,18 +47,12 @@ interface KonanLibraryReader {
     val moduleName: String
     val moduleDescriptor: ModuleDescriptorImpl
     val bitcodePaths: List<String>
-    //val linkData: LinkData?
 }
 
 abstract class FileBasedLibraryReader(
     val file: File, 
     val configuration: CompilerConfiguration, 
     val reader: MetadataReader): KonanLibraryReader {
-
-    init {
-        if (!file.exists()) 
-            error("Path '" + file.path + "' does not exist")
-    }
 
     override val libraryName: String
         get() = file.path
@@ -68,9 +62,11 @@ abstract class FileBasedLibraryReader(
         reader.loadSerializedModule(currentAbiVersion)
     }
 
-    override val moduleName = namedModuleData.name
+    override val moduleName: String
+        get() = namedModuleData.name
 
-    protected val tableOfContentsAsString = namedModuleData.base64
+    protected val tableOfContentsAsString : String
+        get() = namedModuleData.base64
 
     protected fun packageMetadata(fqName: String): Base64 =
         reader.loadSerializedPackageFragment(fqName)
@@ -93,10 +89,34 @@ class KtBcLibraryReader(file: File, configuration: CompilerConfiguration)
 }
 
 // TODO: Get rid of the configuration here.
-class SplitLibraryReader(file: File, configuration: CompilerConfiguration) 
-    : FileBasedLibraryReader(file, configuration, SplitMetadataReader(file)) {
+class SplitLibraryReader(val libDir: File, configuration: CompilerConfiguration) 
+    : FileBasedLibraryReader(libDir, configuration, SplitMetadataReader(libDir)) {
 
     public constructor(path: String, configuration: CompilerConfiguration) : this(File(path), configuration) 
+
+    val klibFile = File("${libDir.path}.klib")
+
+    init {
+        unpackIfNeeded()
+    }
+
+    // TODO: Search path processing is also goes somewhere around here.
+    fun unpackIfNeeded() {
+        // TODO: Clarify the policy here.
+        if (libDir.exists()) {
+            if (libDir.isDirectory()) return
+        }
+        if (!klibFile.exists()) {
+            error("Could not find neither $libDir nor $klibFile.")
+        }
+        if (klibFile.isFile()) {
+            klibFile.unzipAs(libDir)
+
+            if (!libDir.exists()) error("Could not unpack $klibFile as $libDir.")
+        } else {
+            error("Expected $klibFile to be a regular libDir.")
+        }
+    }
 
     private val File.dirAbsolutePaths: List<String>
         get() = this.listFiles()!!.toList()!!.map{it->it.absolutePath}
@@ -106,8 +126,7 @@ class SplitLibraryReader(file: File, configuration: CompilerConfiguration)
             // TODO: Make it a function
             // TODO: make something about it here.
             val target = configuration.get(KonanConfigKeys.TARGET) ?: TargetManager.host.name.toLowerCase()
-            val dir = File(file, target)
-            println(dir)
+            val dir = File(libDir, target)
             return dir
         }
 
@@ -164,12 +183,13 @@ class KtBcLibraryWriter(file: File, val llvmModule: LLVMModuleRef)
     }
 }
 
-class SplitLibraryWriter(file: File, val target: String): FileBasedLibraryWriter(file) {
-    public constructor(path: String, target: String): this(File(path), target)
+class SplitLibraryWriter(val libDir: File, target: String, val nopack: Boolean = false): FileBasedLibraryWriter(libDir) {
+    public constructor(path: String, target: String, nopack: Boolean): this(File(path), target, nopack)
 
-    val linkdataDir = File(file, "linkdata")
-    val resourcesDir = File(file, "resources")
-    val targetDir = File(file, target)
+    val klibFile = File("${libDir.path}.klib")
+    val linkdataDir = File(libDir, "linkdata")
+    val resourcesDir = File(libDir, "resources")
+    val targetDir = File(libDir, target)
     val kotlinDir = File(targetDir, "kotlin")
     val nativeDir = File(targetDir, "native")
     // TODO: Experiment with separate bitcode files.
@@ -179,10 +199,12 @@ class SplitLibraryWriter(file: File, val target: String): FileBasedLibraryWriter
 
     init {
         // TODO: figure out the proper policy here.
-        file.deleteRecursively()
-        file.mkdirs()
-        kotlinDir.mkdirs()
+        libDir.deleteRecursively()
+        klibFile.delete()
+        libDir.mkdirs()
         linkdataDir.mkdirs()
+        targetDir.mkdirs()
+        kotlinDir.mkdirs()
         nativeDir.mkdirs()
         resourcesDir.mkdirs()
     }
@@ -204,8 +226,12 @@ class SplitLibraryWriter(file: File, val target: String): FileBasedLibraryWriter
     }
 
     override fun commit() {
-        // This is no-op for the Split library.
-        // Or should we zip the directory?
+        if (!nopack) {
+            // This is no-op for the Split library.
+            // Or should we zip the directory?
+            libDir.zipDirAs(klibFile)
+            libDir.deleteRecursively()
+        }
     }
 }
 

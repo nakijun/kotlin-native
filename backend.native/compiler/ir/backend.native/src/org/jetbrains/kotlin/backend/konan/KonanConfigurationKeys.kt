@@ -49,6 +49,8 @@ class KonanConfigKeys {
                 = CompilerConfigurationKey.create("don't link with stdlib")
         val NOLINK: CompilerConfigurationKey<Boolean> 
                 = CompilerConfigurationKey.create("don't link, only produce a bitcode file ")
+        val NOPACK: CompilerConfigurationKey<Boolean> 
+                = CompilerConfigurationKey.create("don't the library into a klib file")
         val NOMAIN: CompilerConfigurationKey<Boolean> 
                 = CompilerConfigurationKey.create("assume 'main' entry point to be provided by external libraries")
         val LINKER_ARGS: CompilerConfigurationKey<List<String>>
