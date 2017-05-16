@@ -85,7 +85,7 @@ internal fun emitLLVM(context: Context) {
             DIFinalize(context.debugInfo.builder)
         }
         
-        if (context.config.configuration.get(KonanConfigKeys.NOLINK)?:false == false) {
+        if (!context.config.configuration.getBoolean(KonanConfigKeys.NOLINK)) {
             val program = context.config.configuration.get(KonanConfigKeys.PROGRAM_NAME)!!
             val output = "$program}.kt.bc"
             context.bitcodeFileName = output
@@ -117,7 +117,7 @@ internal fun emitLLVM(context: Context) {
             context.library = library
 
             context.bitcodeFileName = 
-                SplitLibraryWriter.mainBitcodeFile(libraryName, targetName)
+                library.mainBitcodeFileName
         }
 }
 

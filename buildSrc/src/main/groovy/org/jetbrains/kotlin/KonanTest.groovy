@@ -117,7 +117,7 @@ abstract class KonanTest extends JavaExec {
     }
 
     String buildExePath() {
-        def exeName = project.file(source).name.replace(".kt", ".kt.exe")
+        def exeName = project.file(source).name.replace(".kt", "")
         return "$outputDirectory/$exeName"
     }
 
@@ -206,7 +206,7 @@ fun handleExceptionContinuation(x: (Throwable) -> Unit): Continuation<Any?> = ob
     @TaskAction
     void executeTest() {
         createOutputDirectory()
-        def exe = buildExePath()
+        def exe = "${buildExePath()}.kexe"
 
         compileTest(buildCompileList(), exe)
 

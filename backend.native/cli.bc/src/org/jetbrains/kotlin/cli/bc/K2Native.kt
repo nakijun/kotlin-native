@@ -112,14 +112,9 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                     put(PROGRAM_NAME,program)
                     put(EXECUTABLE_FILE,"${program}.kexe")
                 }
-                val bitcodeFile = if (arguments.nolink) {
-                    SplitLibraryWriter.mainBitcodeFile(library, arguments.target ?: "host")
-                } else {
-                    "${arguments.outputFile ?: "program"}.kt.bc"
-                }
-                //put(BITCODE_FILE, bitcodeFile)
                 // This is a decision we could change
-                put(CommonConfigurationKeys.MODULE_NAME, bitcodeFile)
+                val module = if (arguments.nolink) library else program
+                put(CommonConfigurationKeys.MODULE_NAME, module)
                 put(ABI_VERSION, 1)
 
                 if (arguments.runtimeFile != null)

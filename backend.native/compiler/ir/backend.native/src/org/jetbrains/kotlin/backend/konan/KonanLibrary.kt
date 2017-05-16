@@ -124,6 +124,8 @@ interface KonanLibraryWriter {
     fun addNativeBitcode(library: String)
     fun addKotlinBitcode(llvmModule: LLVMModuleRef)
     fun commit()
+
+    val mainBitcodeFileName: String
 }
 
 abstract class FileBasedLibraryWriter (
@@ -133,6 +135,8 @@ abstract class FileBasedLibraryWriter (
 
 class KtBcLibraryWriter(file: File, val llvmModule: LLVMModuleRef) 
     : FileBasedLibraryWriter(file) {
+
+    override val mainBitcodeFileName = file.path
 
     public constructor(path: String, llvmModule: LLVMModuleRef) 
         : this(File(path), llvmModule)
@@ -158,23 +162,20 @@ class KtBcLibraryWriter(file: File, val llvmModule: LLVMModuleRef)
     override fun commit() {
         LLVMWriteBitcodeToFile(llvmModule, file.path)
     }
-
-    companion object {
-        fun mainBitcodeFile(library: File): File = library
-    }
 }
 
 class SplitLibraryWriter(file: File, val target: String): FileBasedLibraryWriter(file) {
     public constructor(path: String, target: String): this(File(path), target)
 
-    val kotlinDir = kotlinDir(file, target)
-    val targetDir = targetDir(file, target)
     val linkdataDir = File(file, "linkdata")
-    val nativeDir = File(targetDir, "native")
     val resourcesDir = File(file, "resources")
+    val targetDir = File(file, target)
+    val kotlinDir = File(targetDir, "kotlin")
+    val nativeDir = File(targetDir, "native")
     // TODO: Experiment with separate bitcode files.
     // Per package or per class.
-    val kotlinBitcode = kotlinBitcode(file, target)
+    val mainBitcodeFile = File(kotlinDir, "program.kt.bc")
+    override val mainBitcodeFileName = mainBitcodeFile.path
 
     init {
         // TODO: figure out the proper policy here.
@@ -190,7 +191,7 @@ class SplitLibraryWriter(file: File, val target: String): FileBasedLibraryWriter
 
     override fun addKotlinBitcode(llvmModule: LLVMModuleRef) {
         this.llvmModule = llvmModule
-        LLVMWriteBitcodeToFile(llvmModule, kotlinBitcode.path)
+        LLVMWriteBitcodeToFile(llvmModule, mainBitcodeFileName)
     }
 
     override fun addLinkData(linkData: LinkData) {
@@ -205,18 +206,6 @@ class SplitLibraryWriter(file: File, val target: String): FileBasedLibraryWriter
     override fun commit() {
         // This is no-op for the Split library.
         // Or should we zip the directory?
-    }
-
-    companion object {
-        fun targetDir(library: File, target: String) = File(library, target)
-
-        fun kotlinDir(library: File, target: String) = File(targetDir(library, target), "kotlin")
-
-        fun kotlinBitcode(library: File, target: String)
-            = File(kotlinDir(library, target), "program.kt.bc")
-
-        fun mainBitcodeFile(libraryName: String, target: String) 
-            = kotlinBitcode(File(libraryName), target).path
     }
 }
 
