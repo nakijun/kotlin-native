@@ -122,6 +122,7 @@ internal fun emitLLVM(context: Context) {
 }
 
 internal fun buildLibrary(phaser: PhaseManager, natives: List<String>, linkData: LinkData, target: String, output: String, llvmModule: LLVMModuleRef): KonanLibraryWriter {
+    // TODO: May be we need a factory?
     //val library = KtBcLibraryWriter(output, llvmModule)
     val library = SplitLibraryWriter(output, target)
 

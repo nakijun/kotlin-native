@@ -22,7 +22,6 @@ import llvm.*
 import org.jetbrains.kotlin.backend.konan.Context
 import org.jetbrains.kotlin.backend.konan.KonanConfigKeys
 import org.jetbrains.kotlin.backend.konan.KonanVersion
-import org.jetbrains.kotlin.backend.konan.SplitLibraryWriter
 import org.jetbrains.kotlin.backend.konan.TargetManager
 import org.jetbrains.kotlin.backend.konan.util.File
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
